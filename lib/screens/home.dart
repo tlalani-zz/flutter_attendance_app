@@ -31,8 +31,14 @@ class _HomeState extends State<Home> {
         roster = res;
         setState(() => loading = false);
       } else {
-        setState(() => loading = false);
-        showAckDialog(context, "ALERT", "The roster was unable to be found, please download the roster before scanning");
+        downloadRoster().then((map) {
+          if(map != null) {
+            roster = map;
+          } else {
+            showAckDialog(context, "ALERT", "The roster was unable to be found, please download the roster before scanning");
+          }
+          setState(() => loading = false);
+        });
       }
     });
   }
@@ -40,10 +46,10 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     getTardyTime();
-    return loading == true ? Loader() : Scaffold(
+    return Scaffold(
       appBar: AppBar(
         title: Text('Scan'),
-        actions: <Widget>[
+        actions: loading == true ? null : <Widget>[
           IconButton(
             icon: Icon(Icons.cloud_download),
             tooltip: 'Download Roster',
@@ -55,14 +61,16 @@ class _HomeState extends State<Home> {
             icon: Icon(Icons.person_add),
             tooltip: 'Manual Entry',
             onPressed: () async {
-              Person person = await Navigator.pushNamed(context, '/manual', arguments: tardyTime);
-              sendToDatabase(person);
+              dynamic person = await Navigator.pushNamed(context, '/manual', arguments: tardyTime);
+              if(person != null)
+                sendToDatabase(person);
             }
           )
         ],
       ),
       body: Center(
-        child: Container(
+        child: loading == true ? Loader() :
+          Container(
               child: ButtonTheme(
                 minWidth: 200,
                 height: 200,
@@ -159,7 +167,7 @@ class _HomeState extends State<Home> {
     tardyTime = time.replacing(minute: time.minute + 10);
   }
 
-  List<Person> findPeople(res) {
+  List<Person> findPeople(String res) {
     String role = res.split(":")[0];
     String name = res.split(":")[1];
     List<Person> p = [];
