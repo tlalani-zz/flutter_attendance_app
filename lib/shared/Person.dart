@@ -18,7 +18,7 @@ class Person {
 
   Map<String, String> toDbObj() {
     Map<String, String> map = new Map();
-    map.putIfAbsent('Status', () => this.status.toString());
+    map.putIfAbsent('Status', () => statusToString(this.status));
     map.putIfAbsent('Time', () => this.parseTime());
     if(status == Status.T) {
       map.putIfAbsent('Reason', () => this.reason);
@@ -33,6 +33,11 @@ class Person {
     String hour = this.time.hour < 10 ? '0${this.time.hour}' : '${this.time.hour}';
     String minute = this.time.minute < 10 ? '0${this.time.minute}' : '${this.time.minute}';
     return '$hour:$minute';
+  }
+
+  @override
+  String toString() {
+    return 'Name: $name, Role: $role';
   }
 
 
