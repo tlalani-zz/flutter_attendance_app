@@ -68,7 +68,7 @@ class DatabaseService {
       try {
         String schoolYear = getSchoolYear(dt: DateTime.now());
         DataSnapshot snapshot = await get(["People", schoolYear]);
-        return parseRoster(snapshot.value);
+        parseRoster(snapshot.value);
       } catch (e) {
         print(e);
         return null;
@@ -77,17 +77,18 @@ class DatabaseService {
 
   Map<String, dynamic> parseRoster(Map<dynamic, dynamic> map) {
     Map<String, dynamic> retMap = new Map();
+    print("RosterFull: ${map}");
     try {
       List<String> roles = map.keys.toList().cast<String>();
       roles.forEach((role) {
         retMap.putIfAbsent(role, () => new Map<String, dynamic>());
-        if(map[role].runtimeType.toString() == Map().runtimeType.toString()) {
+        if(map[role] is Map) {
           Map<dynamic, dynamic> grades = map[role];
           grades.keys.toList().cast<String>().forEach((grade) {
             List<dynamic> people = map[role][grade];
             retMap[role].putIfAbsent(grade, () => people);
           });
-        } else if(map[role].runtimeType.toString() == List().runtimeType.toString()) {
+        } else {
           List<dynamic> people = map[role];
           retMap[role].putIfAbsent('people', () => people);
         }

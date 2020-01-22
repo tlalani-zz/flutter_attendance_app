@@ -193,3 +193,7 @@ bool isAfter(TimeOfDay t1, TimeOfDay t2) {
 enum Status {
   T, P, A, E
 }
+
+String statusToString(Status s) {
+  return s.toString().split(".")[1];
+}

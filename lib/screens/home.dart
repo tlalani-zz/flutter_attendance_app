@@ -82,18 +82,19 @@ class _HomeState extends State<Home> {
                     side: BorderSide(color: Colors.teal[400])
                   ),
                   onPressed: () async {
-                    String res = await scanner.scan();
+                    dynamic res = await scanner.scan();
                     List<Person> people = findPeople(res);
-                    Person p = await showDropdownConfirmDialog(context, res.split(":"), people);
-                    if(p != null) {
-                      if(p.status == Status.T) {
-                        Map<String, String> map = await Navigator.pushNamed(context, "/tardy");
-                        p.reason = map["reason"];
+                    print(people[0].toString());
+                    dynamic person = await showDropdownConfirmDialog(context, res.split(":"), people);
+                    if(person != null) {
+                      if(person.status == Status.T) {
+                        dynamic map = await Navigator.pushNamed(context, "/tardy");
+                        person.reason = map["reason"];
                         if(map.containsKey("comments")) {
-                          p.comments = map["comments"];
+                          person.comments = map["comments"];
                         }
                       }
-                      sendToDatabase(p);
+                      sendToDatabase(person);
                     } else {
                       showAckDialog(context, "Error", "There was an error scanning your code, please try again or enter the person manually");
                     }
@@ -113,8 +114,9 @@ class _HomeState extends State<Home> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(result[0]),
-        Text(result[1]),
+        Text('Role: ${result[0]}', style: TextStyle(fontSize: 17)),
+        SizedBox(height: 8),
+        Text('Name: ${result[1]}', style: TextStyle(fontSize: 17)),
         grades == null || grades[0] == null ? Text('') :
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
@@ -138,15 +140,15 @@ class _HomeState extends State<Home> {
 
     List<Widget> actions = [
       FlatButton(
+          child: Text('No', style: TextStyle(color: Colors.red[400])),
+          onPressed: () {
+            Navigator.pop(context, new Map<String, String>());
+          }),
+      FlatButton(
         child: Text('Yes'),
         onPressed: () {
         Navigator.pop(context, {'grade': grade });
       }),
-      FlatButton(
-        child: Text('No'),
-        onPressed: () {
-        Navigator.pop(context, new Map<String, String>());
-      })
     ];
     Map<String, String> map = await customDialog(context, "Confirm", content, actions);
     return map.containsKey('grade') ? people.firstWhere((person) => person.grade == map['grade']) : null;
