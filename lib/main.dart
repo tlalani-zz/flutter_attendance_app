@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_attendance/screens/home.dart';
+import 'package:flutter_attendance/screens/intro.dart';
 import 'package:flutter_attendance/screens/manual.dart';
 import 'package:flutter_attendance/screens/selection.dart';
 import 'package:flutter_attendance/screens/signin.dart';
@@ -28,6 +29,7 @@ class MyApp extends StatelessWidget {
       ),
         initialRoute: "/login",
         routes: {
+          "/intro": (context) => IntroScreen(),
           "/login": (context) => SignIn(),
           "/select": (context) => ReOptionsSelect(),
           "/home": (context) => Home(),

@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_attendance/services/database.dart';
 import 'package:flutter_attendance/shared/constants.dart';
-import 'package:flutter_attendance/shared/currentconfig.dart';
 import 'package:flutter_attendance/shared/cusom-text-field.dart';
-import 'package:flutter_attendance/shared/loader.dart';
 
 class TardyOptions extends StatefulWidget {
   @override

@@ -1,5 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_attendance/shared/currentconfig.dart';
+import 'package:flutter_attendance/shared/ReConfig.dart';
 
 class AuthService {
 
@@ -20,10 +20,11 @@ class AuthService {
         return true;
       }
     } catch (e) {
-      print(e);
+      //print(e);
       user = null;
       return false;
     }
+    return false;
   }
 
   void setConfig(ReConfig config) {

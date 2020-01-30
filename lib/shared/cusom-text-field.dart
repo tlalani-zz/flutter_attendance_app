@@ -8,8 +8,9 @@ class CustomTextField extends StatelessWidget {
   final Function validator;
   final bool enabled;
   final bool isPassword;
+  final InputDecoration textDecoration;
   final TextEditingController controller;
-  const CustomTextField({Key key, this.labelText, this.onChanged, this.validator, this.isPassword = false, this.enabled = true, this.controller = null}) : super(key: key);
+  const CustomTextField({Key key, this.labelText, this.onChanged, this.validator, this.isPassword = false, this.enabled = true, this.controller = null, this.textDecoration}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -17,10 +18,11 @@ class CustomTextField extends StatelessWidget {
       child: TextFormField(
         controller: controller,
         enabled: enabled,
-        decoration: decoration.copyWith(labelText: labelText),
+        decoration: this.textDecoration != null ? this.textDecoration : decoration.copyWith(labelText: labelText),
         onChanged: onChanged,
         validator: validator,
         obscureText: isPassword,
+
       )
     );
   }

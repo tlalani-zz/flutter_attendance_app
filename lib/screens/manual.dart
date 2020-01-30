@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_attendance/services/database.dart';
 import 'package:flutter_attendance/shared/Person.dart';
 import 'package:flutter_attendance/shared/constants.dart';
-import 'package:flutter_attendance/shared/currentconfig.dart';
+import 'package:flutter_attendance/shared/ReConfig.dart';
 import 'package:flutter_attendance/shared/cusom-text-field.dart';
 
 class ManualEntry extends StatefulWidget {
@@ -15,8 +15,6 @@ class _ManualEntryState extends State<ManualEntry> {
 
   static DatabaseService _databaseService = new DatabaseService();
   ReConfig config = _databaseService.getConfig();
-  get startTime => TimeOfDay(hour: 5, minute: 0);
-  get endTime => config.shiftEndTime.replacing(hour: config.shiftEndTime.hour + 1);
   List<String> grades;
   Map<String, dynamic> map = {
     "role": null,
@@ -96,8 +94,7 @@ class _ManualEntryState extends State<ManualEntry> {
 
   bool hasNoGrade() {
     return
-      map["role"].toString().isEmpty
-        ||
+      map["role"].toString().isEmpty ||
         (map["role"].toString().toLowerCase() == "management" ||
             map["role"].toString().toLowerCase() == "intern");
   }
@@ -108,21 +105,20 @@ class _ManualEntryState extends State<ManualEntry> {
     bool roleWithNoGradeAndGradeSelected = hasNoGrade() && map["grade"] != null;
     bool roleWithGradeAndNoGradeSelected = !hasNoGrade() && map["grade"] == null;
     bool selectedDayNotCorrectRECDay = (map["date"] as DateTime).weekday != daysOfWeek.indexOf(config.day) + 1;
-    bool selectedTimeIsBeforeShiftStart = isBefore(map["time"], startTime);
-    bool selectedTimeIsAfterShiftEnd = isAfter(map["time"], endTime);
+    bool selectedTimeIsBeforeShiftStart = isBefore(map["time"], config.earliestStartTime);
+    bool selectedTimeIsAfterShiftEnd = isAfter(map["time"], config.latestEndTime);
     if(tardyWithNoReason)
       s += '-> Please Enter a Reason for Tardy Student.\n\n';
     if(roleWithNoGradeAndGradeSelected)
       s += "-> The selected role shouldn't have a grade.\n\n";
-    if(roleWithGradeAndNoGradeSelected) {
+    if(roleWithGradeAndNoGradeSelected)
       s += "-> The selected role should have a grade.\n\n";
-    }
     if(selectedDayNotCorrectRECDay)
       s += "-> The date you selected is on a ${daysOfWeek[map["date"].weekday - 1]}. Your REC day is ${config.day}.\n\n";
     if(selectedTimeIsBeforeShiftStart)
-      s += "-> The time you selected ${toDbTime(map["time"])} is earlier than the possible start time of ${toDbTime(startTime)}.\n\n";
+      s += "-> The time you selected ${toDbTime(map["time"])} is earlier than the possible start time of ${toDbTime(config.earliestStartTime)}.\n\n";
     if(selectedTimeIsAfterShiftEnd)
-      s += "-> The time you selected ${toDbTime(map["time"])} is later than the possible end time of ${toDbTime(endTime)}.\n\n";
+      s += "-> The time you selected ${toDbTime(map["time"])} is later than the possible end time of ${toDbTime(config.latestEndTime)}.\n\n";
     if(s.isNotEmpty) {
       showAckDialog(context, "You Have Errors", s);
       return false;

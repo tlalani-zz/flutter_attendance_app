@@ -1,20 +1,25 @@
 
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_attendance/services/auth.dart';
 import 'package:flutter_attendance/shared/constants.dart';
-import 'package:flutter_attendance/shared/currentconfig.dart';
+import 'package:flutter_attendance/shared/ReConfig.dart';
 
 class DatabaseService {
 
   final DatabaseReference _database = new FirebaseDatabase().reference();
   final AuthService _auth = new AuthService();
 
+  get currentShift {
+    return getConfig().re_shift;
+  }
+
   Future<DataSnapshot> _get(List<String> path) async {
     try {
       DatabaseReference ref = _database;
       for(String pathVar in path) {
-            ref = ref.child(pathVar);
-          }
+        ref = ref.child(pathVar);
+      }
       return await ref.once();
     } catch (e) {
       print(e);
@@ -36,7 +41,6 @@ class DatabaseService {
       }
       await ref.set(val);
     } catch (e) {
-      print(e);
     }
   }
 
@@ -48,7 +52,6 @@ class DatabaseService {
       }
       await ref.remove();
     } catch (e) {
-      print(e);
     }
   }
 
@@ -59,7 +62,6 @@ class DatabaseService {
       map = map['permissions'];
       return map;
     } catch(e) {
-      print(e);
       return null;
     }
   }
@@ -68,16 +70,14 @@ class DatabaseService {
       try {
         String schoolYear = getSchoolYear(dt: DateTime.now());
         DataSnapshot snapshot = await get(["People", schoolYear]);
-        parseRoster(snapshot.value);
+        return parseRoster(snapshot.value);
       } catch (e) {
-        print(e);
-        return null;
+        return new Map();
       }
   }
 
   Map<String, dynamic> parseRoster(Map<dynamic, dynamic> map) {
     Map<String, dynamic> retMap = new Map();
-    print("RosterFull: ${map}");
     try {
       List<String> roles = map.keys.toList().cast<String>();
       roles.forEach((role) {
@@ -95,9 +95,26 @@ class DatabaseService {
       });
       return retMap;
     } catch (e) {
-      print(e);
-      return null;
+      return new Map();
     }
+  }
+
+  Future<Map<String, String>> checkAllShiftsForPerson(String role, String name, TimeOfDay tardyTime) async {
+    String schoolYear = getSchoolYear(dt: DateTime.now());
+    List<String> list = getConfig().toDbRef().sublist(0, 4);
+    Map<dynamic, dynamic> map = (await this._get(list)).value;
+    for(var shiftDay in map.keys) {
+      for(var shiftTime in map[shiftDay].keys) {
+        dynamic roles = map[shiftDay][shiftTime]["People"][schoolYear][role];
+        if(roles is Map) {
+          for(var grade in roles.keys) {
+            if(roles[grade].contains(name))
+                return {'shiftDay': shiftDay, 'shiftTime': shiftTime, 'grade': grade, 'name': name, 'role': role };
+          }
+        }
+      }
+    }
+    return null;
   }
 
   bool isGrade(String key, ReConfig config) {

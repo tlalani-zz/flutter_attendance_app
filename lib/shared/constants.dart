@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 
 import 'cusom-text-field.dart';
 
-const logoPicture = 'https://firebasestorage.googleapis.com/v0/b/attendance-rec.appspot.com/o/pictures%2Flogo.png?alt=media';
 const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const Grades = {
@@ -27,7 +26,14 @@ const Grades = {
 };
 const Roles = ['Management', 'Student', 'Teacher', 'TA', 'Intern'];
 const REGISTER_URL = 'https://attendance-rec.web.app/reset?mode=register';
-const RESET_URL = 'https://attendance-rec.web.app/reset?mode=forgotPasssword';
+const RESET_URL = 'https://attendance-rec.web.app/reset?mode=forgotPassword';
+enum Status {
+  T, P, A, E
+}
+
+enum LoaderType {
+  CubeGrid, Wave, SquareCircle, ThreeBounce, ChasingDots, WanderingCubes
+}
 
 String getSchoolYear({String date, DateTime dt}) {
   int month;
@@ -108,16 +114,17 @@ Future<bool> showConfirmDialog(BuildContext context, String content) {
           title: Text('Confirm'),
           content: Text(content),
           actions: <Widget>[
+
+            FlatButton(
+                child: Text('No', style: TextStyle(color: Colors.red[400])),
+                onPressed: () {
+                  Navigator.pop(context, false);
+                }),
             FlatButton(
                 child: Text('Yes'),
                 onPressed: () {
                   Navigator.pop(context, true);
                 }),
-            FlatButton(
-                child: Text('No'),
-                onPressed: () {
-                  Navigator.pop(context, false);
-                })
           ],
         );
       });
@@ -178,7 +185,6 @@ DateTime timeOfDayToDateTime(DateTime date, TimeOfDay time) {
   return DateTime(date.year, date.month, date.day, time.hour, time.minute, 0, 0, 0);
 }
 
-
 /// Checks if first time is before second time
 /// i.e isBefore(TimeOfDay(12:00), TimeOfDay(13:45)),
 ///     returns true
@@ -188,10 +194,6 @@ bool isBefore(TimeOfDay t1, TimeOfDay t2) {
 
 bool isAfter(TimeOfDay t1, TimeOfDay t2) {
   return !isBefore(t1, t2);
-}
-
-enum Status {
-  T, P, A, E
 }
 
 String statusToString(Status s) {

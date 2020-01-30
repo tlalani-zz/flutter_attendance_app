@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_attendance/services/database.dart';
 import 'package:flutter_attendance/shared/Person.dart';
 import 'package:flutter_attendance/shared/constants.dart';
-import 'package:flutter_attendance/shared/currentconfig.dart';
+import 'package:flutter_attendance/shared/ReConfig.dart';
 import 'package:flutter_attendance/shared/loader.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:qrscan/qrscan.dart' as scanner;
@@ -26,21 +26,7 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     super.initState();
-    _read().then((res) {
-      if(res != null) {
-        roster = res;
-        setState(() => loading = false);
-      } else {
-        downloadRoster().then((map) {
-          if(map != null) {
-            roster = map;
-          } else {
-            showAckDialog(context, "ALERT", "The roster was unable to be found, please download the roster before scanning");
-          }
-          setState(() => loading = false);
-        });
-      }
-    });
+    _read();
   }
 
   @override
@@ -50,13 +36,16 @@ class _HomeState extends State<Home> {
       appBar: AppBar(
         title: Text('Scan'),
         actions: loading == true ? null : <Widget>[
+
           IconButton(
             icon: Icon(Icons.cloud_download),
             tooltip: 'Download Roster',
             onPressed: () async {
-              roster = await downloadRoster();
+              Map<String, dynamic> map = await downloadRoster();
+              setState(() => roster = map);
             }
           ),
+
           IconButton(
             icon: Icon(Icons.person_add),
             tooltip: 'Manual Entry',
@@ -81,29 +70,54 @@ class _HomeState extends State<Home> {
                     borderRadius: BorderRadius.circular(100),
                     side: BorderSide(color: Colors.teal[400])
                   ),
-                  onPressed: () async {
-                    dynamic res = await scanner.scan();
-                    List<Person> people = findPeople(res);
-                    print(people[0].toString());
-                    dynamic person = await showDropdownConfirmDialog(context, res.split(":"), people);
-                    if(person != null) {
-                      if(person.status == Status.T) {
-                        dynamic map = await Navigator.pushNamed(context, "/tardy");
-                        person.reason = map["reason"];
-                        if(map.containsKey("comments")) {
-                          person.comments = map["comments"];
-                        }
-                      }
-                      sendToDatabase(person);
-                    } else {
-                      showAckDialog(context, "Error", "There was an error scanning your code, please try again or enter the person manually");
-                    }
+                  onPressed: roster == null || roster.isEmpty ? null : () async {
+                    await scanParseAndSendToDatabase();
                   },
                 ),
               ),
             )
           ),
     );
+  }
+
+  Future<void> scanParseAndSendToDatabase() async {
+    dynamic res = await scanner.scan();
+    //String res = "Student:Jamal Crafer";
+    TimeOfDay nowTime = TimeOfDay.now();
+    String role = res.split(":")[0];
+    String name = res.split(":")[1];
+    List<Person> people = findPeople(role, name, nowTime);
+    dynamic person;
+    if(people.isNotEmpty) {
+      person = await showDropdownConfirmDialog(context, res.split(":"), people);
+    } else if(kDebugMode) {
+      Map<String, String> map = await _databaseService.checkAllShiftsForPerson(role, name, tardyTime);
+      String content = 'The student is not in this shift'
+          '\n\nCurrent Shift: ${_databaseService.currentShift}'
+          '\nStudent\'s Shift: ${map['shiftDay']}, ${map['shiftTime']}'
+          '\n\nDo you want to perform a shift transfer?';
+      await showConfirmDialog(context, content)
+          ? person = new Person(role: role, grade: map['grade'], name: name, time: nowTime, tardyTime: tardyTime)
+          : showAckDialog(context, 'Alert', 'Student\'s attendance not saved');
+    }
+    if (person != null) {
+      if (person.status == Status.T) {
+        dynamic map = await Navigator.pushNamed(context, "/tardy");
+        if(map == null) {
+          showAckDialog(context, "Error",
+              "There was an error scanning your code, please try again or enter the person manually");
+          return;
+        }
+        person.reason = map["reason"];
+        if (map.containsKey("comments")) {
+          person.comments = map["comments"];
+        }
+      }
+      sendToDatabase(person);
+    } else {
+      showAckDialog(context, "Error",
+          "There was an error scanning your code, please try again or enter the person manually");
+    }
   }
 
   Future<Person> showDropdownConfirmDialog(BuildContext context, List<String> result, List<Person> people) async {
@@ -154,10 +168,6 @@ class _HomeState extends State<Home> {
     return map.containsKey('grade') ? people.firstWhere((person) => person.grade == map['grade']) : null;
   }
 
-  parseResult(res) {
-    return ['Role: ${res[0]}', 'Name: ${res[1]}'];
-  }
-
   Future<Map<String, dynamic>> downloadRoster() async {
     Map<String, dynamic> map = await _databaseService.getRoster();
     _save();
@@ -165,21 +175,19 @@ class _HomeState extends State<Home> {
   }
 
   getTardyTime() {
-    TimeOfDay time = _databaseService.getConfig().shiftStartTime;
+    TimeOfDay time = _databaseService.getConfig().startTime;
     tardyTime = time.replacing(minute: time.minute + 10);
   }
 
-  List<Person> findPeople(String res) {
-    String role = res.split(":")[0];
-    String name = res.split(":")[1];
+  List<Person> findPeople(String role, String name, TimeOfDay now) {
     List<Person> p = [];
-    if(roster[role].containsKey('people')) {
-      p.add(new Person(role: role, name: name, time: TimeOfDay.now(), tardyTime: tardyTime));
+    if(roster[role].containsKey('people') && roster[role]['people'].contains(name)) {
+      p.add(new Person(role: role, name: name, time: now, tardyTime: tardyTime));
     } else {
       List<String> grades = roster[role].keys.toList().cast<String>();
       grades.forEach((grade) {
         if(roster[role][grade].contains(name)) {
-          p.add(new Person(role: role, name: name, grade: grade, time: TimeOfDay.now(), tardyTime: tardyTime));
+          p.add(new Person(role: role, name: name, grade: grade, time: now, tardyTime: tardyTime));
         }
       });
     }
@@ -188,25 +196,39 @@ class _HomeState extends State<Home> {
 
   sendToDatabase(Person p) {
     String currDate = toDbDate(DateTime.now());
-    List<String> dbs =_databaseService.getConfig().toDbRef();
+    List<String> databaseRef =_databaseService.getConfig().toDbRef();
     if(p.grade != null) {
-      dbs.addAll(['Dates', getSchoolYear(dt: DateTime.now()), currDate, p.role, p.grade, p.name]);
+      databaseRef.addAll(['Dates', getSchoolYear(dt: DateTime.now()), currDate, p.role, p.grade, p.name]);
     } else {
-      dbs.addAll(['Dates', getSchoolYear(dt: DateTime.now()), currDate, p.role, p.name]);
+      databaseRef.addAll(['Dates', getSchoolYear(dt: DateTime.now()), currDate, p.role, p.name]);
 
     }
-    _databaseService.set(dbs, val: p.toDbObj());
+    _databaseService.set(databaseRef, val: p.toDbObj());
   }
 
-  Future<Map<String, dynamic>> _read() async {
+  Future<void> _read() async {
     try {
       ReConfig config = _databaseService.getConfig();
       final directory = await getApplicationDocumentsDirectory();
       final file = File('${directory.path}/${config.toFileString()}');
       String text = await file.readAsString();
-      return jsonDecode(text);
+      setState(() {
+        roster = jsonDecode(text);
+        loading = false;
+      });
     } catch (e) {
-      return null;
+      Map<String, dynamic> map = await downloadRoster();
+      if(map.isNotEmpty) {
+        setState(() {
+          roster = map;
+          loading = false;
+        });
+      }
+      else {
+        setState(() => loading = false);
+        showAckDialog(context, 'Alert',
+            'Please Tap Download Roster at the Top Left before Scanning');
+      }
     }
   }
 
