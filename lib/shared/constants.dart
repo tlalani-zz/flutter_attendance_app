@@ -1,5 +1,6 @@
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 
 import 'cusom-text-field.dart';
 
@@ -99,7 +100,7 @@ Future<dynamic> customDialog(BuildContext context, String title, Widget content,
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('$title'),
+          title: title == null ? null : Text('$title'),
           content: content,
           actions: actions
         );
@@ -161,6 +162,14 @@ Future<void> showTextFieldDialog(BuildContext context, String title, Function on
     OutlineButton(onPressed: onPressed, child: Text('Submit'))
   ];
   await customDialog(context, title, content, action);
+}
+
+Future<void> showCodeDialog(BuildContext context, String role, String name) async {
+  Widget content = Container(
+    child: Image.network('https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=$role:$name')
+  );
+  List<Widget> actions = [FlatButton(child: Text('Ok'), onPressed: (){Navigator.of(context).pop();})];
+  await customDialog(context, null, content, null);
 }
 
 Map<String, int> reasons = {

@@ -150,7 +150,9 @@ class _ManualEntryState extends State<ManualEntry> {
     tardyTime = ModalRoute.of(context).settings.arguments;
 
     return Scaffold(
-        appBar: AppBar(title: Text("Manual Entry")),
+        appBar: AppBar(title: Text("Manual Entry"), actions: <Widget>[
+          IconButton(icon: Icon(Icons.group), onPressed: () { Navigator.pushNamed(context, "/roster");}),
+        ],),
         body: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Center(

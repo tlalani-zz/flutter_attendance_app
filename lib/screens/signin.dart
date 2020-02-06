@@ -103,7 +103,8 @@ class _State extends State<SignIn> {
                       if(await canLaunch(REGISTER_URL)) {
                         bool res = await showConfirmDialog(context,
                             "Redirecting you to: \n$REGISTER_URL\n");
-                        if(res) await launch(REGISTER_URL);                      } else {
+                        if(res) await launch(REGISTER_URL);
+                      } else {
                         showAckDialog(context, "Alert", "Couldn't open browser, please go to:\n$REGISTER_URL\nto request and account");
                       }
                     }

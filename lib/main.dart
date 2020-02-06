@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_attendance/screens/home.dart';
 import 'package:flutter_attendance/screens/intro.dart';
 import 'package:flutter_attendance/screens/manual.dart';
+import 'package:flutter_attendance/screens/roster/roster-update.dart';
 import 'package:flutter_attendance/screens/selection.dart';
 import 'package:flutter_attendance/screens/signin.dart';
 import 'package:flutter_attendance/screens/tardy.dart';
@@ -35,6 +36,7 @@ class MyApp extends StatelessWidget {
           "/home": (context) => Home(),
           "/tardy": (context) => TardyOptions(),
           "/manual": (context) => ManualEntry(),
+          "/roster": (context) => Roster(),
         }
     );
   }
