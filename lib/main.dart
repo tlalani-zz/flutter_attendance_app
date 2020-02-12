@@ -6,6 +6,8 @@ import 'package:flutter_attendance/screens/roster/roster-update.dart';
 import 'package:flutter_attendance/screens/selection.dart';
 import 'package:flutter_attendance/screens/signin.dart';
 import 'package:flutter_attendance/screens/tardy.dart';
+import 'package:flutter_attendance/screens/update/update-attendance.dart';
+import 'package:flutter_attendance/screens/update/update-person.dart';
 
 void main() => runApp(MyApp());
 
@@ -37,6 +39,8 @@ class MyApp extends StatelessWidget {
           "/tardy": (context) => TardyOptions(),
           "/manual": (context) => ManualEntry(),
           "/roster": (context) => Roster(),
+          "/update": (context) => UpdateAttendance(),
+          "/updatePerson": (context) => UpdatePerson(),
         }
     );
   }

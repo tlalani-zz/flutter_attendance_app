@@ -38,6 +38,14 @@ class _HomeState extends State<Home> {
         actions: loading == true ? null : <Widget>[
 
           IconButton(
+            icon: Icon(Icons.person_outline),
+            tooltip: 'Update Attendance',
+            onPressed: () {
+              Navigator.pushNamed(context, '/update');
+            }
+          ),
+
+          IconButton(
             icon: Icon(Icons.cloud_download),
             tooltip: 'Download Roster',
             onPressed: () async {
@@ -60,20 +68,32 @@ class _HomeState extends State<Home> {
       body: Center(
         child: loading == true ? Loader() :
           Container(
-              child: ButtonTheme(
-                minWidth: 200,
-                height: 200,
-                child: RaisedButton(
-                  color: Colors.teal[400],
-                  child: Text('SCAN', style: TextStyle(fontSize: 40, color: Colors.white)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(100),
-                    side: BorderSide(color: Colors.teal[400])
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  ButtonTheme(
+                    minWidth: 200,
+                    height: 200,
+                    child: RaisedButton(
+                      color: Colors.teal[400],
+                      child: Text('SCAN', style: TextStyle(fontSize: 40, color: Colors.white)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(100),
+                        side: BorderSide(color: Colors.teal[400])
+                      ),
+                      onPressed: roster == null || roster.isEmpty ? null : () async {
+                        await scanParseAndSendToDatabase();
+                      },
+                    ),
                   ),
-                  onPressed: roster == null || roster.isEmpty ? null : () async {
-                    await scanParseAndSendToDatabase();
-                  },
-                ),
+                  SizedBox(height:40),
+                  FlatButton(
+                    child: Text('Can\'t find your code?'),
+                    onPressed: () {
+                      Navigator.pushNamed(context, "/roster");
+                    }
+                  )
+                ],
               ),
             )
           ),
@@ -82,6 +102,7 @@ class _HomeState extends State<Home> {
 
   Future<void> scanParseAndSendToDatabase() async {
     dynamic res = await scanner.scan();
+    print("scanned $res");
     //String res = "Student:Jamal Crafer";
     TimeOfDay nowTime = TimeOfDay.now();
     String role = res.split(":")[0];
@@ -196,12 +217,11 @@ class _HomeState extends State<Home> {
 
   sendToDatabase(Person p) {
     String currDate = toDbDate(DateTime.now());
-    List<String> databaseRef =_databaseService.getConfig().toDbRef();
+    List<String> databaseRef = [];
     if(p.grade != null) {
       databaseRef.addAll(['Dates', getSchoolYear(dt: DateTime.now()), currDate, p.role, p.grade, p.name]);
     } else {
       databaseRef.addAll(['Dates', getSchoolYear(dt: DateTime.now()), currDate, p.role, p.name]);
-
     }
     _databaseService.set(databaseRef, val: p.toDbObj());
   }

@@ -1,11 +1,36 @@
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_attendance/shared/reason-dropdown.dart';
+import 'package:flutter_attendance/shared/status-dropdown.dart';
 import 'package:http/http.dart';
 
+import 'Person.dart';
+import 'ReConfig.dart';
 import 'cusom-text-field.dart';
 
-const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const shortMonths = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec'
+];
+const daysOfWeek = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday"
+];
 const Grades = {
   'PrePrimary': ["PK", "KG"],
   'Primary': [
@@ -28,18 +53,21 @@ const Grades = {
 const Roles = ['Management', 'Student', 'Teacher', 'TA', 'Intern'];
 const REGISTER_URL = 'https://attendance-rec.web.app/reset?mode=register';
 const RESET_URL = 'https://attendance-rec.web.app/reset?mode=forgotPassword';
-enum Status {
-  T, P, A, E
-}
+enum Status { T, P, A, E }
 
 enum LoaderType {
-  CubeGrid, Wave, SquareCircle, ThreeBounce, ChasingDots, WanderingCubes
+  CubeGrid,
+  Wave,
+  SquareCircle,
+  ThreeBounce,
+  ChasingDots,
+  WanderingCubes
 }
 
 String getSchoolYear({String date, DateTime dt}) {
   int month;
   int year;
-  if(date != null) {
+  if (date != null) {
     /*  ['Aug 24', '2019']  */
     List<String> dates = date.split(", ");
     /*  ['Aug', '24'] --> indexOf('Aug') = 7 + 1 = 8 */
@@ -50,11 +78,11 @@ String getSchoolYear({String date, DateTime dt}) {
     year = dt.year;
   }
   /* After June is next school year */
-  if(month > 6) {
-    return year.toString() + '-' + (year+1).toString();
+  if (month > 6) {
+    return year.toString() + '-' + (year + 1).toString();
   } else {
     /* Before June is previous school year */
-    return (year-1).toString() + '-' + year.toString();
+    return (year - 1).toString() + '-' + year.toString();
   }
 }
 
@@ -74,36 +102,36 @@ final InputDecoration decoration = InputDecoration(
     labelText: '',
     filled: true,
     fillColor: Colors.grey[50],
-    enabledBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.black)
-    ),
-    focusedBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.teal[600])
-    ),
+    enabledBorder:
+        OutlineInputBorder(borderSide: BorderSide(color: Colors.black)),
+    focusedBorder:
+        OutlineInputBorder(borderSide: BorderSide(color: Colors.teal[600])),
     errorBorder: OutlineInputBorder(
       borderSide: BorderSide(color: Colors.red),
     ),
     focusedErrorBorder: OutlineInputBorder(
       borderSide: BorderSide(color: Colors.red),
     ),
-  disabledBorder: OutlineInputBorder(
-    borderSide: BorderSide(color: Colors.grey)
-  )
-);
+    disabledBorder:
+        OutlineInputBorder(borderSide: BorderSide(color: Colors.grey)));
 
 Future<bool> connectedToInternet() async {
-  return await (Connectivity().checkConnectivity()) == ConnectivityResult.none ? false : true;
+  return await (Connectivity().checkConnectivity()) == ConnectivityResult.none
+      ? false
+      : true;
 }
 
-Future<dynamic> customDialog(BuildContext context, String title, Widget content, List<Widget> actions) {
+Future<dynamic> customDialog(
+    BuildContext context, String title, Widget content, List<Widget> actions,
+    {ShapeBorder shape}) {
   return showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: title == null ? null : Text('$title'),
-          content: content,
-          actions: actions
-        );
+            title: title == null ? null : Text('$title'),
+            shape: shape,
+            content: content,
+            actions: actions);
       });
 }
 
@@ -115,7 +143,6 @@ Future<bool> showConfirmDialog(BuildContext context, String content) {
           title: Text('Confirm'),
           content: Text(content),
           actions: <Widget>[
-
             FlatButton(
                 child: Text('No', style: TextStyle(color: Colors.red[400])),
                 onPressed: () {
@@ -149,12 +176,13 @@ Future<bool> showAckDialog(BuildContext context, String title, String content) {
       });
 }
 
-Future<void> showTextFieldDialog(BuildContext context, String title, Function onChanged, Function onPressed, {String labelText}) async {
-  Widget content =
-  Column(
+Future<void> showTextFieldDialog(
+    BuildContext context, String title, Function onChanged, Function onPressed,
+    {String labelText}) async {
+  Widget content = Column(
     mainAxisSize: MainAxisSize.min,
     crossAxisAlignment: CrossAxisAlignment.center,
-    children: <Widget> [
+    children: <Widget>[
       CustomTextField(labelText: labelText, onChanged: onChanged),
     ],
   );
@@ -164,12 +192,15 @@ Future<void> showTextFieldDialog(BuildContext context, String title, Function on
   await customDialog(context, title, content, action);
 }
 
-Future<void> showCodeDialog(BuildContext context, String role, String name) async {
+Future<void> showCodeDialog(
+    BuildContext context, String role, String name) async {
   Widget content = Container(
-    child: Image.network('https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=$role:$name')
-  );
-  List<Widget> actions = [FlatButton(child: Text('Ok'), onPressed: (){Navigator.of(context).pop();})];
-  await customDialog(context, null, content, null);
+      child: Image.network(
+          'https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=$role:$name'));
+  RoundedRectangleBorder shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(20),
+      side: BorderSide(color: Colors.black, width: 10));
+  await customDialog(context, null, content, null, shape: shape);
 }
 
 Map<String, int> reasons = {
@@ -191,7 +222,8 @@ TimeOfDay stringToTimeOfDay(String time) {
 }
 
 DateTime timeOfDayToDateTime(DateTime date, TimeOfDay time) {
-  return DateTime(date.year, date.month, date.day, time.hour, time.minute, 0, 0, 0);
+  return DateTime(
+      date.year, date.month, date.day, time.hour, time.minute, 0, 0, 0);
 }
 
 /// Checks if first time is before second time
@@ -207,4 +239,30 @@ bool isAfter(TimeOfDay t1, TimeOfDay t2) {
 
 String statusToString(Status s) {
   return s.toString().split(".")[1];
+}
+
+Status stringToStatus(String s) {
+  switch (s) {
+    case "P":
+      return Status.P;
+    case "A":
+      return Status.A;
+    case "T":
+      return Status.T;
+    case "E":
+      return Status.E;
+    default:
+      return Status.A;
+  }
+}
+
+DateTime getLastShiftDay(ReConfig config, DateTime dt) {
+  String day = config.day;
+  int reShiftDay = daysOfWeek.indexOf(day);
+  int diff = -1 * (dt.weekday - reShiftDay);
+  return DateTime(2020, dt.month, dt.day - diff);
+}
+
+String getDateString(DateTime dt) {
+  return '${shortMonths[dt.month - 1]} ${dt.day}, ${dt.year}';
 }

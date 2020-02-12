@@ -151,7 +151,7 @@ class _ManualEntryState extends State<ManualEntry> {
 
     return Scaffold(
         appBar: AppBar(title: Text("Manual Entry"), actions: <Widget>[
-          IconButton(icon: Icon(Icons.group), onPressed: () { Navigator.pushNamed(context, "/roster");}),
+          IconButton(icon: Icon(Icons.group), onPressed: () { Navigator.pushReplacementNamed(context, "/roster");}),
         ],),
         body: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
