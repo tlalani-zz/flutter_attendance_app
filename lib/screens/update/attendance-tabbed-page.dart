@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_attendance/shared/Person.dart';
-import 'package:flutter_attendance/shared/constants.dart';
+import 'package:flutter_attendance/shared/constants/constants.dart';
 
 class AttendanceTabbedPage extends StatelessWidget {
   final Map<String, List<Person>> map;
@@ -72,7 +72,7 @@ class AttendanceTabbedPage extends StatelessWidget {
         dynamic updatedPerson = await Navigator.pushNamed(
             context, "/updatePerson",
             arguments: person);
-        print(updatedPerson.toString());
+        onUpdated(updatedPerson);
       },
     );
   }

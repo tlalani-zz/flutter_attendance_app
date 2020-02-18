@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_attendance/shared/constants.dart';
+import 'package:flutter_attendance/shared/constants/constants.dart';
 
 class CustomTextField extends StatelessWidget {
   final String initialValue;

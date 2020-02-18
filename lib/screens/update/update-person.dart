@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_attendance/shared/Person.dart';
-import 'package:flutter_attendance/shared/constants.dart';
+import 'package:flutter_attendance/shared/constants/constants.dart';
 import 'package:flutter_attendance/shared/cusom-text-field.dart';
 import 'package:flutter_attendance/shared/reason-dropdown.dart';
 import 'package:flutter_attendance/shared/status-dropdown.dart';
@@ -36,18 +36,24 @@ class _UpdatePersonState extends State<UpdatePerson> {
               StatusDropdown(
                   value: person.status,
                   onChanged: (value) {
-                    person.status = value;
+                    setState(() {
+                      person.status = value;
+                    });
                   }),
               ReasonDropdown(
                   value: person.reason,
                   labelText: 'Select a Reason',
                   onChanged: (value) {
-                    person.status = stringToStatus(value);
+                    setState(() {
+                      person.reason = value;
+                    });
                   }),
               CustomTextField(
                   initialValue: person.comments,
                   onChanged: (value) {
-                    person.comments = value;
+                    setState(() {
+                      person.comments = value;
+                    });
                   }),
               RaisedButton(
                   child: Text('Submit'),

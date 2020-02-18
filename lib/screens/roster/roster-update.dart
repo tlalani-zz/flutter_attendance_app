@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_attendance/screens/roster/tabbed-page.dart';
 import 'package:flutter_attendance/services/database.dart';
-import 'package:flutter_attendance/shared/constants.dart';
+import 'package:flutter_attendance/shared/constants/constants.dart';
 import 'package:flutter_attendance/shared/loader.dart';
 import 'package:page_view_indicators/arrow_page_indicator.dart';
 

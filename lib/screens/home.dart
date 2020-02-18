@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_attendance/services/auth.dart';
 import 'package:flutter_attendance/services/database.dart';
 import 'package:flutter_attendance/shared/Person.dart';
-import 'package:flutter_attendance/shared/constants.dart';
+import 'package:flutter_attendance/shared/constants/constants.dart';
 import 'package:flutter_attendance/shared/ReConfig.dart';
 import 'package:flutter_attendance/shared/loader.dart';
 import 'package:path_provider/path_provider.dart';
@@ -49,7 +50,8 @@ class _HomeState extends State<Home> {
             icon: Icon(Icons.cloud_download),
             tooltip: 'Download Roster',
             onPressed: () async {
-              Map<String, dynamic> map = await downloadRoster();
+              Map<dynamic, dynamic> map = await downloadRoster();
+              print(map);
               setState(() => roster = map);
             }
           ),
@@ -189,8 +191,8 @@ class _HomeState extends State<Home> {
     return map.containsKey('grade') ? people.firstWhere((person) => person.grade == map['grade']) : null;
   }
 
-  Future<Map<String, dynamic>> downloadRoster() async {
-    Map<String, dynamic> map = await _databaseService.getRoster();
+  Future<Map<dynamic, dynamic>> downloadRoster() async {
+    Map<dynamic, dynamic> map = await _databaseService.getRoster();
     _save();
     return map;
   }
@@ -217,13 +219,14 @@ class _HomeState extends State<Home> {
 
   sendToDatabase(Person p) {
     String currDate = toDbDate(DateTime.now());
-    List<String> databaseRef = [];
-    if(p.grade != null) {
-      databaseRef.addAll(['Dates', getSchoolYear(dt: DateTime.now()), currDate, p.role, p.grade, p.name]);
-    } else {
-      databaseRef.addAll(['Dates', getSchoolYear(dt: DateTime.now()), currDate, p.role, p.name]);
-    }
-    _databaseService.set(databaseRef, val: p.toDbObj());
+    _databaseService.updateAttendance(
+        getSchoolYear(dt: DateTime.now()),
+        currDate,
+        p.role,
+        p.name,
+        grade: p.grade,
+        val: p.toDbObj()
+    );
   }
 
   Future<void> _read() async {

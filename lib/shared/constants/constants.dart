@@ -4,9 +4,9 @@ import 'package:flutter_attendance/shared/reason-dropdown.dart';
 import 'package:flutter_attendance/shared/status-dropdown.dart';
 import 'package:http/http.dart';
 
-import 'Person.dart';
-import 'ReConfig.dart';
-import 'cusom-text-field.dart';
+import '../Person.dart';
+import '../ReConfig.dart';
+import '../cusom-text-field.dart';
 
 const shortMonths = [
   'Jan',

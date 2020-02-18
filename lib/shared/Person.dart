@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'constants.dart';
+import 'constants/constants.dart';
 
 class Person {
   String role;
@@ -32,11 +32,19 @@ class Person {
       this.status == Status.A);
   get shouldNotHaveStatus => !this.shouldHaveStatus;
 
+  get isPresent => (this.status == Status.T || this.status == Status.P);
+  get isTardy => this.status == Status.T;
+  get isNotTardy => this.status == Status.P;
+  get isAbsent => this.status == Status.E || this.status == Status.A;
+  get isNotAbsent => !this.isAbsent;
+
   Map<String, String> toDbObj() {
     Map<String, String> map = new Map();
     map.putIfAbsent('Status', () => statusToString(this.status));
-    map.putIfAbsent('Time', () => this.parseTime());
-    if (status == Status.T) {
+    if(this.isNotAbsent) {
+      map.putIfAbsent('Time', () => this.parseTime());
+    }
+    if (this.shouldHaveStatus) {
       map.putIfAbsent('Reason', () => this.reason);
       if (comments != null) {
         map.putIfAbsent('Comments', () => this.comments);
@@ -46,10 +54,10 @@ class Person {
   }
 
   parseTime() {
-    String hour =
-        this.time.hour < 10 ? '0${this.time.hour}' : '${this.time.hour}';
-    String minute =
-        this.time.minute < 10 ? '0${this.time.minute}' : '${this.time.minute}';
+      String hour =
+      this.time.hour < 10 ? '0${this.time.hour}' : '${this.time.hour}';
+      String minute =
+      this.time.minute < 10 ? '0${this.time.minute}' : '${this.time.minute}';
     return '$hour:$minute';
   }
 

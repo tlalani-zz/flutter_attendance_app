@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_attendance/screens/update/attendance-tabbed-page.dart';
 import 'package:flutter_attendance/services/database.dart';
 import 'package:flutter_attendance/shared/Person.dart';
-import 'package:flutter_attendance/shared/constants.dart';
+import 'package:flutter_attendance/shared/constants/constants.dart';
 import 'package:flutter_attendance/shared/loader.dart';
 import 'package:page_view_indicators/arrow_page_indicator.dart';
 
@@ -25,6 +25,7 @@ class _UpdateAttendanceState extends State<UpdateAttendance> {
   @override
   void initState() {
     date = getLastShiftDay(_databaseService.getConfig(), DateTime.now());
+    print(date);
     _databaseService.getAttendance(dt: date).then((res) {
       if (res != null) {
         map = res;
@@ -55,19 +56,21 @@ class _UpdateAttendanceState extends State<UpdateAttendance> {
                 icon: Icon(Icons.date_range),
                 tooltip: 'Change Date',
                 onPressed: () async {
-                  DateTime date = await showDatePicker(
+                  DateTime day = await showDatePicker(
                       context: context,
-                      initialDate: DateTime.now(),
+                      initialDate: date,
                       firstDate: DateTime(2020),
                       lastDate: DateTime.now());
-                  setState(() {
-                    loading = true;
-                  });
-                  map = await _databaseService.getAttendance(dt: date);
-                  setState(() {
-                    views = updateViews();
-                    loading = false;
-                  });
+                  if(day != null) {
+                    setState(() {
+                      loading = true;
+                    });
+                    map = await _databaseService.getAttendance(dt: date);
+                    setState(() {
+                      views = updateViews();
+                      loading = false;
+                    });
+                  }
                 })
           ],
         ),
@@ -106,20 +109,21 @@ class _UpdateAttendanceState extends State<UpdateAttendance> {
   }
 
   updatePerson(Person person) {
-    String schoolYear = getSchoolYear(dt: date);
-    String dateString = getDateString(date);
-    if (person.grade != null) {
-      this._databaseService.set([
-        'Dates',
-        schoolYear,
-        dateString,
-        person.role,
-        person.grade,
-        person.name
-      ], val: person.toDbObj());
+    if(person != null) {
+      person.time = person.isTardy
+          ? _databaseService
+          .getConfig()
+          .tardyTime
+          : _databaseService
+          .getConfig()
+          .startTime;
+      print('$person + ${person.time}');
+      String schoolYear = getSchoolYear(dt: date);
+      String dateString = getDateString(date);
+      this._databaseService.updateAttendance(
+          schoolYear, dateString, person.role, person.name, grade: person.grade,
+          val: person.toDbObj());
+      updateViews();
     }
-    this._databaseService.set(
-        ['Dates', schoolYear, dateString, person.role, person.name],
-        val: person.toDbObj());
   }
 }
