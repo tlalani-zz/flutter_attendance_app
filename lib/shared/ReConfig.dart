@@ -31,4 +31,8 @@ class ReConfig {
   String toFileString() {
     return "roster#" + this.re_center + "#"+this.re_class + "#" + day + "@" + time + ".json";
   }
+
+  Map<String, String> toMap() {
+    return {"re_center": re_center, "re_class": re_class, "re_shift": re_shift};
+  }
 }

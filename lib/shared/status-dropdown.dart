@@ -14,7 +14,7 @@ class StatusDropdown extends StatelessWidget {
     return DropdownButtonFormField(
       decoration: decoration.copyWith(labelText: 'Select a Tardy Reason'),
       value: value,
-      items: Status.values.map((item) {
+      items: StatusType.values.map((item) {
         return DropdownMenuItem(
             value: item, child: Text(statusToString(item))
         );

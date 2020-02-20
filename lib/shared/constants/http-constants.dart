@@ -3,12 +3,16 @@ import 'package:flutter_attendance/services/auth.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
 
+import 'constants.dart';
+
 class HttpConstants {
-  static final BASE_URL =
-      'https://us-central1-attendance-rec.cloudfunctions.net/app';
+  static const String BASE_URL =
+        'https://us-central1-attendance-rec.cloudfunctions.net/app';
+       // 'http://10.0.2.2:5000/attendance-rec/us-central1/app';
   static AuthService _auth = new AuthService();
 
-  static String get perms => _auth.currentConfig.asArray.toString();
+  //GETTERS//
+  static String get perms => json.encode(_auth.currentConfig.toMap());
 
   static Future<Map<dynamic, dynamic>> getPermissions() async {
     Response res = await http.get('$BASE_URL/permissions', headers: {
@@ -18,49 +22,53 @@ class HttpConstants {
   }
 
   static Future<Map<dynamic, dynamic>> getRoster(String schoolYear) async {
-    Response res = await http.get('$BASE_URL/roster/$schoolYear',
-        headers: {"authorization": await _auth.getUserToken(), "perms": perms});
-    return json.decode(res.body);
+    return await _makeRequest('roster/$schoolYear', RequestType.GETTER);
   }
 
   static Future<Map<dynamic, dynamic>> getAttendance(
       String schoolYear, String date) async {
-    Response res = await http.get('$BASE_URL/attendance/$schoolYear?date=$date',
-        headers: {"authorization": await _auth.getUserToken(), "perms": perms});
-    print(res.body);
-    return json.decode(res.body);
+    return await _makeRequest('attendance/$schoolYear?date=$date', RequestType.GETTER);
   }
 
   static Future<Map<dynamic, dynamic>> getAllStudentsFromAllShifts() async {
-    Response res = await http.get('$BASE_URL/attendance', headers: {
-      "authorization": await _auth.getUserToken(),
-      "perms": perms
-    });
-    return json.decode(res.body);
+    return await _makeRequest('attendance', RequestType.GETTER);
   }
 
+  //SETTERS//
   static Future<void> updateRoster(String schoolYear, String role,
       {String grade, List<String> val}) async {
-    String url = grade != null
-        ? '$BASE_URL/roster/$schoolYear/$role/$grade'
-        : '$BASE_URL/roster/$schoolYear/$role';
-    await http.put(url,
-        headers: {"authorization": await _auth.getUserToken(), "perms": perms},
-        body: json.encode({"people": val})
+    return await _makeRequest('roster/$schoolYear/$role/${grade == null ? '' : grade}', RequestType.SETTER, body: {"people": val});
+  }
+
+  static Future<void> updateAttendance(String schoolYear, String dateString, String role, String name,
+      {String grade, Map val}) async {
+    return await _makeRequest(
+        'attendance/$schoolYear/$dateString/$role/${grade == null ? '' : grade}', RequestType.SETTER, body: {"name": name, "person": val}
     );
   }
 
-  static Future<void> updateAttendance(String schoolYear, String dateString, String role, String name, {String grade, Map val}) async {
-    String url = grade != null
-        ? '$BASE_URL/attendance/$schoolYear/$dateString/$role/$grade'
-        : '$BASE_URL/attendance/$schoolYear/$dateString/$role';
+  static Future<dynamic> _makeRequest(String url, RequestType type, {dynamic body, dynamic headers}) async {
+    url = '$BASE_URL/$url';
     print(url);
-    print('body::\n');
-    print(json.encode({"name": name, "person": val}));
-    print(perms);
-    await http.post(url,
-        headers: {"authorization": await _auth.getUserToken(), "perms": perms, "content-type":"application/json"},
-        body: json.encode({"name": name, "person": val})
-    );
+    if(headers == null) {
+      headers = {"authorization": await _auth.getUserToken(), "perms": perms};
+    }
+    if (type == RequestType.GETTER) {
+      try {
+        Response res = await http.get(url, headers: headers);
+        return json.decode(res.body);
+      } catch(e) {
+        return null;
+      }
+    } else {
+      try {
+        await http.post(
+            url, headers: headers, body: json.encode(body));
+        return null;
+      } catch(e) {
+        print(e);
+        return e;
+      }
+    }
   }
 }

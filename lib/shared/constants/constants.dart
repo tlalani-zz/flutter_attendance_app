@@ -1,10 +1,5 @@
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_attendance/shared/reason-dropdown.dart';
-import 'package:flutter_attendance/shared/status-dropdown.dart';
-import 'package:http/http.dart';
-
-import '../Person.dart';
 import '../ReConfig.dart';
 import '../cusom-text-field.dart';
 
@@ -53,7 +48,9 @@ const Grades = {
 const Roles = ['Management', 'Student', 'Teacher', 'TA', 'Intern'];
 const REGISTER_URL = 'https://attendance-rec.web.app/reset?mode=register';
 const RESET_URL = 'https://attendance-rec.web.app/reset?mode=forgotPassword';
-enum Status { T, P, A, E }
+enum StatusType { T, P, A, E }
+
+enum RequestType { GETTER, SETTER }
 
 enum LoaderType {
   CubeGrid,
@@ -237,30 +234,34 @@ bool isAfter(TimeOfDay t1, TimeOfDay t2) {
   return !isBefore(t1, t2);
 }
 
-String statusToString(Status s) {
+String statusToString(StatusType s) {
   return s.toString().split(".")[1];
 }
 
-Status stringToStatus(String s) {
+StatusType stringToStatus(String s) {
   switch (s) {
     case "P":
-      return Status.P;
+      return StatusType.P;
     case "A":
-      return Status.A;
+      return StatusType.A;
     case "T":
-      return Status.T;
+      return StatusType.T;
     case "E":
-      return Status.E;
+      return StatusType.E;
     default:
-      return Status.A;
+      return StatusType.A;
   }
 }
 
 DateTime getLastShiftDay(ReConfig config, DateTime dt) {
-  String day = config.day;
-  int reShiftDay = daysOfWeek.indexOf(day);
-  int diff = -1 * (dt.weekday - reShiftDay);
-  return DateTime(2020, dt.month, dt.day - diff);
+  int diff;
+  int reShiftDay = daysOfWeek.indexOf(config.day) + 1;
+  if(dt.weekday < reShiftDay) {
+    diff = dt.weekday + (7 - reShiftDay);
+  } else {
+    diff = dt.weekday - reShiftDay;
+  }
+  return DateTime(dt.year, dt.month, dt.day - diff);
 }
 
 String getDateString(DateTime dt) {

@@ -1,4 +1,3 @@
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_attendance/services/auth.dart';
 import 'package:flutter_attendance/shared/Person.dart';
@@ -69,56 +68,24 @@ class DatabaseService {
     return Grades[config.re_class].contains(key);
   }
 
-  Future<Map<String, Map<String, List<Person>>>> getAttendance(
+  Future<Map<dynamic, dynamic>> getAttendance(
       {DateTime dt}) async {
-    Map<String, Map<String, List<Person>>> retMap = new Map();
-    Map<dynamic, dynamic> roster = await getRoster();
     DateTime date =
         (dt == null ? getLastShiftDay(getConfig(), DateTime.now()) : dt);
     String schoolYear = getSchoolYear(dt: date);
     String dateString = getDateString(date);
+    Map<String, Map<String, List<Person>>> retMap = new Map();
     Map<dynamic, dynamic> map = await HttpConstants.getAttendance(schoolYear, dateString);
-    if (map == null) {
+    map.keys.cast<String>().toList().forEach((role) {
+      retMap.putIfAbsent(role, () => new Map());
+      (map[role] as Map).keys.cast<String>().toList().forEach((gradeOrPeople) {
+        retMap[role].putIfAbsent(gradeOrPeople, () => new List());
+        retMap[role][gradeOrPeople] = (map[role][gradeOrPeople] as List).map((item) => Person.fromMapItem(item)).toList();
+      });
+    });
+    if (retMap == null) {
       return null;
     }
-    roster.forEach((role, rosterRoleMap) {
-      retMap.putIfAbsent(role, () => new Map());
-      if (rosterRoleMap.containsKey('people')) {
-        int index = -1;
-        retMap[role].putIfAbsent('people', () => new List());
-        (rosterRoleMap['people'] as List).forEach((person) {
-          if(map[role] == null) {
-            retMap[role]['people'].add(new Person(
-                role: role, name: person, status: Status.A));
-          } else if ((index = contains(map[role]["people"] as List, person)) == -1) {
-            retMap[role]['people']
-                .add(new Person(role: role, name: person, status: Status.A));
-          } else {
-            retMap[role]['people']
-                .add(Person.fromMapItem(map[role]['people'][index], person, role));
-          }
-        });
-      } else {
-        (rosterRoleMap as Map).keys.forEach((grade) {
-          retMap[role].putIfAbsent(grade, () => new List());
-          (rosterRoleMap[grade] as List).forEach((person) {
-            if (person != null) {
-              int index = -1;
-              if (!map[role].containsKey(grade)) {
-                retMap[role][grade].add(new Person(
-                    role: role, grade: grade, name: person, status: Status.A));
-              } else if ((index = contains((map[role][grade] as List), person)) == -1) {
-                retMap[role][grade].add(new Person(
-                    role: role, grade: grade, name: person, status: Status.A));
-              } else {
-                retMap[role][grade].add(
-                    Person.fromMapItem(map[role][grade][index], person, role));
-              }
-            }
-          });
-        });
-      }
-    });
     return retMap;
   }
 

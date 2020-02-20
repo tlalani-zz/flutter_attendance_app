@@ -63,13 +63,22 @@ class _UpdateAttendanceState extends State<UpdateAttendance> {
                       lastDate: DateTime.now());
                   if(day != null) {
                     setState(() {
+                      date = day;
                       loading = true;
                     });
                     map = await _databaseService.getAttendance(dt: date);
-                    setState(() {
-                      views = updateViews();
-                      loading = false;
-                    });
+                    if(map != null) {
+                      setState(() {
+                        views = updateViews();
+                        loading = false;
+                      });
+                    } else {
+                      setState(() {
+                        loading = false;
+                      });
+                      showAckDialog(context, 'ERROR',
+                          'Unable to find attendance data for the current day');
+                    }
                   }
                 })
           ],
@@ -93,7 +102,7 @@ class _UpdateAttendanceState extends State<UpdateAttendance> {
                           title = map.keys.toList()[page];
                         });
                       },
-                      children: views,
+                      children: views != null ? views : null,
                     ),
                   ));
   }
@@ -121,9 +130,10 @@ class _UpdateAttendanceState extends State<UpdateAttendance> {
       String schoolYear = getSchoolYear(dt: date);
       String dateString = getDateString(date);
       this._databaseService.updateAttendance(
-          schoolYear, dateString, person.role, person.name, grade: person.grade,
+          schoolYear, dateString, person.Role, person.Name, grade: person.Grade,
           val: person.toDbObj());
-      updateViews();
+      setState(() => views = updateViews());
+
     }
   }
 }

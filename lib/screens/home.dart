@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_attendance/services/auth.dart';
 import 'package:flutter_attendance/services/database.dart';
 import 'package:flutter_attendance/shared/Person.dart';
 import 'package:flutter_attendance/shared/constants/constants.dart';
@@ -120,11 +119,11 @@ class _HomeState extends State<Home> {
           '\nStudent\'s Shift: ${map['shiftDay']}, ${map['shiftTime']}'
           '\n\nDo you want to perform a shift transfer?';
       await showConfirmDialog(context, content)
-          ? person = new Person(role: role, grade: map['grade'], name: name, time: nowTime, tardyTime: tardyTime)
+          ? person = new Person(Role: role, Grade: map['grade'], Name: name, time: nowTime, tardyTime: tardyTime)
           : showAckDialog(context, 'Alert', 'Student\'s attendance not saved');
     }
     if (person != null) {
-      if (person.status == Status.T) {
+      if (person.status == StatusType.T) {
         dynamic map = await Navigator.pushNamed(context, "/tardy");
         if(map == null) {
           showAckDialog(context, "Error",
@@ -144,7 +143,7 @@ class _HomeState extends State<Home> {
   }
 
   Future<Person> showDropdownConfirmDialog(BuildContext context, List<String> result, List<Person> people) async {
-    List<String> grades = people.map((person) {return person.grade;}).toList();
+    List<String> grades = people.map((person) {return person.Grade;}).toList();
     String grade = grades[0];
     Widget content =
     Column(
@@ -188,7 +187,7 @@ class _HomeState extends State<Home> {
       }),
     ];
     Map<String, String> map = await customDialog(context, "Confirm", content, actions);
-    return map.containsKey('grade') ? people.firstWhere((person) => person.grade == map['grade']) : null;
+    return map.containsKey('grade') ? people.firstWhere((person) => person.Grade == map['grade']) : null;
   }
 
   Future<Map<dynamic, dynamic>> downloadRoster() async {
@@ -205,12 +204,12 @@ class _HomeState extends State<Home> {
   List<Person> findPeople(String role, String name, TimeOfDay now) {
     List<Person> p = [];
     if(roster[role].containsKey('people') && roster[role]['people'].contains(name)) {
-      p.add(new Person(role: role, name: name, time: now, tardyTime: tardyTime));
+      p.add(new Person(Role: role, Name: name, time: now, tardyTime: tardyTime));
     } else {
       List<String> grades = roster[role].keys.toList().cast<String>();
       grades.forEach((grade) {
         if(roster[role][grade].contains(name)) {
-          p.add(new Person(role: role, name: name, grade: grade, time: now, tardyTime: tardyTime));
+          p.add(new Person(Role: role, Name: name, Grade: grade, time: now, tardyTime: tardyTime));
         }
       });
     }
@@ -222,9 +221,9 @@ class _HomeState extends State<Home> {
     _databaseService.updateAttendance(
         getSchoolYear(dt: DateTime.now()),
         currDate,
-        p.role,
-        p.name,
-        grade: p.grade,
+        p.Role,
+        p.Name,
+        grade: p.Grade,
         val: p.toDbObj()
     );
   }

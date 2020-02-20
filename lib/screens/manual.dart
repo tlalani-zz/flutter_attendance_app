@@ -1,4 +1,3 @@
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_attendance/services/database.dart';
 import 'package:flutter_attendance/shared/Person.dart';
@@ -143,11 +142,11 @@ class _ManualEntryState extends State<ManualEntry> {
 
   mapToPerson(map) {
     return new Person(
-        name: map["name"],
-        grade: map["grade"],
-        role: map["role"],
-        reason: map["reason"],
-        comments: map["comments"],
+        Name: map["name"],
+        Grade: map["grade"],
+        Role: map["role"],
+        Reason: map["reason"],
+        Comments: map["comments"],
         time: map["time"],
         tardyTime: tardyTime
     );

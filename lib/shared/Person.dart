@@ -3,51 +3,51 @@ import 'package:flutter/material.dart';
 import 'constants/constants.dart';
 
 class Person {
-  String role;
-  String name;
-  String grade;
-  Status status;
-  String reason;
-  String comments;
+  String Role;
+  String Name;
+  String Grade;
+  StatusType Status;
+  String Reason;
+  String Comments;
   TimeOfDay time;
 
   Person(
-      {this.role,
-      this.name,
+      {this.Role,
+      this.Name,
       this.time,
-      this.grade,
+      this.Grade,
       TimeOfDay tardyTime,
-      this.reason,
-      this.comments,
-      this.status}) {
-    this.status = (this.status == null
+      this.Reason,
+      this.Comments,
+      this.Status}) {
+    this.Status = (this.Status == null
         ? (this.time != null
-            ? (isAfter(this.time, tardyTime) ? Status.T : Status.P)
+            ? (isAfter(this.time, tardyTime) ? StatusType.T : StatusType.P)
             : null)
-        : this.status);
+        : this.Status);
   }
 
-  get shouldHaveStatus => (this.status == Status.E ||
-      this.status == Status.T ||
-      this.status == Status.A);
+  get shouldHaveStatus => (this.Status == StatusType.E ||
+      this.Status == StatusType.T ||
+      this.Status == StatusType.A);
   get shouldNotHaveStatus => !this.shouldHaveStatus;
 
-  get isPresent => (this.status == Status.T || this.status == Status.P);
-  get isTardy => this.status == Status.T;
-  get isNotTardy => this.status == Status.P;
-  get isAbsent => this.status == Status.E || this.status == Status.A;
+  get isPresent => (this.Status == StatusType.T || this.Status == StatusType.P);
+  get isTardy => this.Status == StatusType.T;
+  get isNotTardy => this.Status == StatusType.P;
+  get isAbsent => this.Status == StatusType.E || this.Status == StatusType.A;
   get isNotAbsent => !this.isAbsent;
 
   Map<String, String> toDbObj() {
     Map<String, String> map = new Map();
-    map.putIfAbsent('Status', () => statusToString(this.status));
+    map.putIfAbsent('Status', () => statusToString(this.Status));
     if(this.isNotAbsent) {
       map.putIfAbsent('Time', () => this.parseTime());
     }
     if (this.shouldHaveStatus) {
-      map.putIfAbsent('Reason', () => this.reason);
-      if (comments != null) {
-        map.putIfAbsent('Comments', () => this.comments);
+      map.putIfAbsent('Reason', () => this.Reason);
+      if (Comments != null) {
+        map.putIfAbsent('Comments', () => this.Comments);
       }
     }
     return map;
@@ -63,23 +63,23 @@ class Person {
 
   @override
   String toString() {
-    return grade != null
-        ? '{Name: $name, Role: $role, Grade: $grade, Status: $status, Reason: $reason}'
-        : '{Name: $name, Role: $role, Status: $status, Reason: $reason}';
+    return Grade != null
+        ? '{Name: $Name, Role: $Role, Grade: $Grade, Status: $Status, Reason: $Reason}'
+        : '{Name: $Name, Role: $Role, Status: $Status, Reason: $Reason}';
   }
 
   bool equals(Person other) {
-    return this.role == other.role || this.name == other.name;
+    return this.Role == other.Role || this.Name == other.Name;
   }
 
-  static Person fromMapItem(Map map, String name, String role) {
+  static Person fromMapItem(Map map, {String Name, String Role}) {
     Person p = new Person();
-    p.status = map.containsKey('Status') ? stringToStatus(map['Status']) : null;
+    p.Status = map.containsKey('Status') ? stringToStatus(map['Status']) : null;
     p.time = map.containsKey('Time') ? stringToTimeOfDay(map['Time']) : null;
-    p.reason = map.containsKey('Reason') ? map['Reason'] : null;
-    p.comments = map.containsKey('Comments') ? map['Comments'] : null;
-    p.role = role;
-    p.name = name;
+    p.Reason = map.containsKey('Reason') ? map['Reason'] : null;
+    p.Comments = map.containsKey('Comments') ? map['Comments'] : null;
+    p.Role = map.containsKey('Role') ? map['Role'] : Role;
+    p.Name = map.containsKey('Name') ? map['Name'] : Name;
     return p;
   }
 }

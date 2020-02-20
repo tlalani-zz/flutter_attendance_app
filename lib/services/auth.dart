@@ -1,12 +1,7 @@
-import 'dart:convert';
-
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_attendance/shared/ReConfig.dart';
-import 'package:flutter_attendance/shared/constants/constants.dart';
 import 'package:flutter_attendance/shared/constants/http-constants.dart';
-import 'package:http/http.dart' as http;
-import 'package:http/http.dart';
+
 class AuthService {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -27,12 +22,10 @@ class AuthService {
         await getPerms();
         return true;
       }
-    } catch (e) {
-      //print(e);
-      user = null;
       return false;
+    } catch (e) {
+      user = null;
     }
-    return false;
   }
 
   void setConfig(ReConfig config) {

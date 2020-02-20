@@ -18,7 +18,7 @@ class _UpdatePersonState extends State<UpdatePerson> {
   Widget build(BuildContext context) {
     person = ModalRoute.of(context).settings.arguments;
     return Scaffold(
-        appBar: AppBar(title: Text('${person.role} - ${person.name}')),
+        appBar: AppBar(title: Text('${person.Role} - ${person.Name}')),
         body: Container(
             child: Padding(
           padding: const EdgeInsets.all(32.0),
@@ -26,33 +26,33 @@ class _UpdatePersonState extends State<UpdatePerson> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              Text('Update ${person.name}\'s Attendance',
+              Text('Update ${person.Name}\'s Attendance',
                   textAlign: TextAlign.center, style: TextStyle(fontSize: 18)),
               _errored
                   ? Text(
-                      'Please Enter a Reason if the status is ${statusToString(person.status)}',
+                      'Please Enter a Reason if the status is ${statusToString(person.Status)}',
                       style: TextStyle(color: Colors.redAccent))
                   : SizedBox(),
               StatusDropdown(
-                  value: person.status,
+                  value: person.Status,
                   onChanged: (value) {
                     setState(() {
-                      person.status = value;
+                      person.Status = value;
                     });
                   }),
               ReasonDropdown(
-                  value: person.reason,
+                  value: person.Reason,
                   labelText: 'Select a Reason',
                   onChanged: (value) {
                     setState(() {
-                      person.reason = value;
+                      person.Reason = value;
                     });
                   }),
               CustomTextField(
-                  initialValue: person.comments,
+                  initialValue: person.Comments,
                   onChanged: (value) {
                     setState(() {
-                      person.comments = value;
+                      person.Comments = value;
                     });
                   }),
               RaisedButton(
@@ -67,7 +67,7 @@ class _UpdatePersonState extends State<UpdatePerson> {
   }
 
   _validate(Person person) {
-    if (person.shouldHaveStatus && person.reason == null) {
+    if (person.shouldHaveStatus && person.Reason == null) {
       setState(() {
         _errored = true;
       });
