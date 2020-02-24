@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_attendance/services/database.dart';
-import 'package:flutter_attendance/shared/constants.dart';
+import 'package:flutter_attendance/shared/constants/constants.dart';
 import 'package:flutter_attendance/shared/ReConfig.dart';
-import 'package:flutter_attendance/shared/loader.dart';
 
 class ReOptionsSelect extends StatefulWidget {
   @override
@@ -10,38 +9,17 @@ class ReOptionsSelect extends StatefulWidget {
 }
 
 class _ReOptionsSelectState extends State<ReOptionsSelect> {
-  List<String> centers;
+  List<String> centers = [];
   List<String> classes = [];
   List<String> shifts = [];
-  Map<dynamic, dynamic> options;
   ReConfig config = new ReConfig();
   DatabaseService _db = new DatabaseService();
-  bool loading;
 
-  Future<void> getConfig() async {
-    options = await _db.getCenters();
-    centers = options.keys.toList().cast<String>();
-    setState(() => loading = false);
-    print(centers);
-  }
-
-  List<String> getShifts(val) {
-    List<String> res = [];
-    List<String> days =
-        options[config.re_center][val].keys.toList().cast<String>();
-    for (String day in days) {
-      for (String time in options[config.re_center][val][day].cast<String>()) {
-        res.add('$day, $time');
-      }
-    }
-    return res;
-  }
 
   @override
   void initState() {
     super.initState();
-    setState(() => loading = true);
-    getConfig();
+    centers = _db.centers;
   }
 
   @override
@@ -50,16 +28,7 @@ class _ReOptionsSelectState extends State<ReOptionsSelect> {
         appBar: AppBar(
           title: Text("Select Your REC"),
         ),
-        body: loading == true
-            ? Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: <Widget>[
-                    Text('Getting Your User Information'),
-                    SizedBox(height: 40.0),
-                    Loader(),
-                  ])
-            : Container(
+        body: Container(
                 child: Center(
                   child: SingleChildScrollView(
                     child: Form(
@@ -84,8 +53,7 @@ class _ReOptionsSelectState extends State<ReOptionsSelect> {
                             }).toList(),
                             onChanged: (val) => setState(() {
                               config.re_center = val;
-                              setState(() => classes =
-                                  options[val].keys.toList().cast<String>());
+                              setState(() => classes = _db.classes(config.re_center));
                             }),
                           ),
                           SizedBox(height: 20.0),
@@ -99,7 +67,7 @@ class _ReOptionsSelectState extends State<ReOptionsSelect> {
                             }).toList(),
                             onChanged: (val) => setState(() {
                               config.re_class = val;
-                              setState(() => shifts = getShifts(val));
+                              setState(() => shifts = _db.shifts(config.re_center, config.re_class));
                             }),
                           ),
                           SizedBox(height: 20.0),

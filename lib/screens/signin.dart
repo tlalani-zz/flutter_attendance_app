@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_attendance/services/auth.dart';
-import 'package:flutter_attendance/shared/constants.dart';
+import 'package:flutter_attendance/shared/constants/constants.dart';
 import 'package:flutter_attendance/shared/cusom-text-field.dart';
 import 'package:flutter_attendance/shared/loader.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -51,7 +51,16 @@ class _State extends State<SignIn> {
       ),
       body: Center(
         child: SingleChildScrollView(
-          child: Container(
+          child: loading == true
+              ? Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Text('Signing in and getting your user information'),
+                SizedBox(height: 40.0),
+                Loader(),
+              ])
+                : Container(
             padding: EdgeInsets.symmetric(vertical: 0, horizontal: 20.0),
             child: Form(
               key: _formKey,
@@ -81,9 +90,7 @@ class _State extends State<SignIn> {
 
                   SizedBox(height:40.0),
 
-                  loading == true
-                      ? Loader(type: LoaderType.Wave)
-                      : RaisedButton(
+                  RaisedButton(
                     color: Colors.teal[200],
                     shape: RoundedRectangleBorder(
                       borderRadius: new BorderRadius.circular(5)
@@ -103,7 +110,8 @@ class _State extends State<SignIn> {
                       if(await canLaunch(REGISTER_URL)) {
                         bool res = await showConfirmDialog(context,
                             "Redirecting you to: \n$REGISTER_URL\n");
-                        if(res) await launch(REGISTER_URL);                      } else {
+                        if(res) await launch(REGISTER_URL);
+                      } else {
                         showAckDialog(context, "Alert", "Couldn't open browser, please go to:\n$REGISTER_URL\nto request and account");
                       }
                     }

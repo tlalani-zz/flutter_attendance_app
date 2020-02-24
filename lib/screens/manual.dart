@@ -1,8 +1,7 @@
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_attendance/services/database.dart';
 import 'package:flutter_attendance/shared/Person.dart';
-import 'package:flutter_attendance/shared/constants.dart';
+import 'package:flutter_attendance/shared/constants/constants.dart';
 import 'package:flutter_attendance/shared/ReConfig.dart';
 import 'package:flutter_attendance/shared/cusom-text-field.dart';
 
@@ -14,8 +13,12 @@ class ManualEntry extends StatefulWidget {
 class _ManualEntryState extends State<ManualEntry> {
 
   static DatabaseService _databaseService = new DatabaseService();
+  static const String ROLE = "role";
+  static const String GRADE = "grade";
   ReConfig config = _databaseService.getConfig();
+  Map<dynamic, dynamic> roster;
   List<String> grades;
+  bool loading = true;
   Map<String, dynamic> map = {
     "role": null,
     "grade": null,
@@ -26,13 +29,14 @@ class _ManualEntryState extends State<ManualEntry> {
     "comments": null
   };
   List<String> names = [];
-  String schoolYear = getSchoolYear(dt: DateTime.now());
   TextEditingController _controller = new TextEditingController();
   TimeOfDay tardyTime;
 
   @override
   void initState() {
-    grades = config.getGrades();
+    setState(() => loading = true);
+    _databaseService.getRoster().then((res) => setState((){roster = res;loading = false;}));
+    grades = config.grades;
     super.initState();
   }
 
@@ -42,29 +46,32 @@ class _ManualEntryState extends State<ManualEntry> {
     super.dispose();
   }
 
-  getNames(bool optionChange, {DateTime dt}) async {
-    if(optionChange) {
-      if(dt != null) {
-        schoolYear = getSchoolYear(dt: dt);
+  getNames({String context, DateTime dt}) async {
+    if(dt == null) {
+      switch(context) {
+        case ROLE:
+          setState(() => names = (roster[map["role"]]["people"] as List).cast<String>());
+          break;
+        case GRADE:
+          setState(() => names = (roster[map["role"]][map["grade"]] as List).cast<String>());
+          break;
+        default:
+          setState(() => names = null);
       }
-      _getNames();
-    }
-    if(dt != null && schoolYear != getSchoolYear(dt: dt)) {
-      schoolYear = getSchoolYear(dt: dt);
-      _getNames();
+    } else {
+      _getNames(dt);
     }
   }
 
-  Future<void> _getNames() async {
-    List<String> path = ["People", schoolYear, map["role"]];
-    if(map["grade"] != null) {
-      path.add(map["grade"]);
-    }
-    try {
-      DataSnapshot snapshot = await _databaseService.get(path);
-      setState(() => names = (snapshot.value as List).cast<String>());
-    } catch(e) {
-      setState(() => names = null);
+  Future<void> _getNames(DateTime newDT) async {
+    if(getSchoolYear(dt: newDT) != getSchoolYear(dt: map["date"])) {
+      roster = await _databaseService.getRoster(dt: newDT);
+      setState(() {
+        map = reInitMap();
+        map["date"] = newDT;
+      });
+    } else {
+      setState(() => map["date"] = newDT);
     }
   }
 
@@ -72,13 +79,10 @@ class _ManualEntryState extends State<ManualEntry> {
     final DateTime picked = await showDatePicker(
         context: context,
         initialDate: map["date"],
-        firstDate: DateTime(1970, 1),
-        lastDate: DateTime(DateTime.now().year + 1, 12));
+        firstDate: DateTime(2017, 8),
+        lastDate: DateTime(DateTime.now().year + 1, 6));
     if (picked != null) {
-      setState(() {
-        map["date"] = picked;
-        getNames(false, dt: picked);
-      });
+      getNames(dt: picked);
     }
   }
 
@@ -86,24 +90,27 @@ class _ManualEntryState extends State<ManualEntry> {
     final TimeOfDay picked =
         await showTimePicker(context: context, initialTime: map["time"]);
     if (picked != null) {
-      print(picked);
       setState(() => map["time"] = picked);
-      if(!isTardy()) {map["reason"] = null;map["comments"]=null;_controller.clear();}
+      if(!isTardy()) {
+        map["reason"] = null;
+        map["comments"]=null;
+        _controller.clear();
+      }
     }
   }
 
-  bool hasNoGrade() {
+  bool shouldHaveGrade() {
     return
-      map["role"].toString().isEmpty ||
+      !(map["role"].toString().isEmpty ||
         (map["role"].toString().toLowerCase() == "management" ||
-            map["role"].toString().toLowerCase() == "intern");
+            map["role"].toString().toLowerCase() == "intern"));
   }
 
   validateForm(BuildContext context) {
     String s = "";
     bool tardyWithNoReason = isTardy() && map["reason"] == null;
-    bool roleWithNoGradeAndGradeSelected = hasNoGrade() && map["grade"] != null;
-    bool roleWithGradeAndNoGradeSelected = !hasNoGrade() && map["grade"] == null;
+    bool roleWithNoGradeAndGradeSelected = !shouldHaveGrade() && map["grade"] != null;
+    bool roleWithGradeAndNoGradeSelected = shouldHaveGrade() && map["grade"] == null;
     bool selectedDayNotCorrectRECDay = (map["date"] as DateTime).weekday != daysOfWeek.indexOf(config.day) + 1;
     bool selectedTimeIsBeforeShiftStart = isBefore(map["time"], config.earliestStartTime);
     bool selectedTimeIsAfterShiftEnd = isAfter(map["time"], config.latestEndTime);
@@ -135,14 +142,26 @@ class _ManualEntryState extends State<ManualEntry> {
 
   mapToPerson(map) {
     return new Person(
-        name: map["name"],
-        grade: map["grade"],
-        role: map["role"],
-        reason: map["reason"],
-        comments: map["comments"],
+        Name: map["name"],
+        Grade: map["grade"],
+        Role: map["role"],
+        Reason: map["reason"],
+        Comments: map["comments"],
         time: map["time"],
         tardyTime: tardyTime
     );
+  }
+
+  reInitMap() {
+    return {
+      "role": null,
+      "grade": null,
+      "date": DateTime.now(),
+      "time": TimeOfDay.now(),
+      "name": null,
+      "reason": null,
+      "comments": null
+    };
   }
 
   @override
@@ -150,7 +169,9 @@ class _ManualEntryState extends State<ManualEntry> {
     tardyTime = ModalRoute.of(context).settings.arguments;
 
     return Scaffold(
-        appBar: AppBar(title: Text("Manual Entry")),
+        appBar: AppBar(title: Text("Manual Entry"), actions: <Widget>[
+          IconButton(icon: Icon(Icons.group), onPressed: () { Navigator.pushReplacementNamed(context, "/roster");}),
+        ],),
         body: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Center(
@@ -174,16 +195,13 @@ class _ManualEntryState extends State<ManualEntry> {
                               onChanged: (val) {
                                 setState(() {
                                   map["role"] = val;
-                                  if(hasNoGrade()) {
-                                    map["grade"] = null;
-                                    getNames(true);
-                                  } else {
-                                    setState(() {
-                                      names = null;
-                                      map["name"] = null;
-                                    });
-                                  }
+                                  map["grade"] = null;
+                                  map["name"] = null;
+                                  names = null;
                                 });
+                                if(!shouldHaveGrade()) {
+                                  getNames(context: ROLE);
+                                }
                               }),
                         ),
                         SizedBox(width: 10),
@@ -196,11 +214,11 @@ class _ManualEntryState extends State<ManualEntry> {
                                 return DropdownMenuItem(
                                     value: item, child: Text('$item'));
                               }).toList(),
-                              onChanged: hasNoGrade() ? null : (val) {
+                              onChanged: !shouldHaveGrade() ? null : (val) {
                                 setState(() {
                                   map["grade"] = val;
-                                  getNames(true);
                                 });
+                                getNames(context: GRADE);
                               }),
                         ),
                       ]),
@@ -282,4 +300,5 @@ class _ManualEntryState extends State<ManualEntry> {
           ),
         ));
   }
+
 }

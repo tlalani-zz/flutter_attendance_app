@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_attendance/shared/constants.dart';
+import 'package:flutter_attendance/shared/constants/constants.dart';
 import 'package:flutter_attendance/shared/cusom-text-field.dart';
 
 class TardyOptions extends StatefulWidget {

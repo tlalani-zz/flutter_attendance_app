@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_attendance/services/database.dart';
 import 'package:flutter_attendance/shared/Person.dart';
-import 'package:flutter_attendance/shared/constants.dart';
+import 'package:flutter_attendance/shared/constants/constants.dart';
 import 'package:flutter_attendance/shared/ReConfig.dart';
 import 'package:flutter_attendance/shared/loader.dart';
 import 'package:path_provider/path_provider.dart';
@@ -38,10 +38,19 @@ class _HomeState extends State<Home> {
         actions: loading == true ? null : <Widget>[
 
           IconButton(
+            icon: Icon(Icons.person_outline),
+            tooltip: 'Update Attendance',
+            onPressed: () {
+              Navigator.pushNamed(context, '/update');
+            }
+          ),
+
+          IconButton(
             icon: Icon(Icons.cloud_download),
             tooltip: 'Download Roster',
             onPressed: () async {
-              Map<String, dynamic> map = await downloadRoster();
+              Map<dynamic, dynamic> map = await downloadRoster();
+              print(map);
               setState(() => roster = map);
             }
           ),
@@ -60,20 +69,32 @@ class _HomeState extends State<Home> {
       body: Center(
         child: loading == true ? Loader() :
           Container(
-              child: ButtonTheme(
-                minWidth: 200,
-                height: 200,
-                child: RaisedButton(
-                  color: Colors.teal[400],
-                  child: Text('SCAN', style: TextStyle(fontSize: 40, color: Colors.white)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(100),
-                    side: BorderSide(color: Colors.teal[400])
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  ButtonTheme(
+                    minWidth: 200,
+                    height: 200,
+                    child: RaisedButton(
+                      color: Colors.teal[400],
+                      child: Text('SCAN', style: TextStyle(fontSize: 40, color: Colors.white)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(100),
+                        side: BorderSide(color: Colors.teal[400])
+                      ),
+                      onPressed: roster == null || roster.isEmpty ? null : () async {
+                        await scanParseAndSendToDatabase();
+                      },
+                    ),
                   ),
-                  onPressed: roster == null || roster.isEmpty ? null : () async {
-                    await scanParseAndSendToDatabase();
-                  },
-                ),
+                  SizedBox(height:40),
+                  FlatButton(
+                    child: Text('Can\'t find your code?'),
+                    onPressed: () {
+                      Navigator.pushNamed(context, "/roster");
+                    }
+                  )
+                ],
               ),
             )
           ),
@@ -82,6 +103,7 @@ class _HomeState extends State<Home> {
 
   Future<void> scanParseAndSendToDatabase() async {
     dynamic res = await scanner.scan();
+    print("scanned $res");
     //String res = "Student:Jamal Crafer";
     TimeOfDay nowTime = TimeOfDay.now();
     String role = res.split(":")[0];
@@ -97,11 +119,11 @@ class _HomeState extends State<Home> {
           '\nStudent\'s Shift: ${map['shiftDay']}, ${map['shiftTime']}'
           '\n\nDo you want to perform a shift transfer?';
       await showConfirmDialog(context, content)
-          ? person = new Person(role: role, grade: map['grade'], name: name, time: nowTime, tardyTime: tardyTime)
+          ? person = new Person(Role: role, Grade: map['grade'], Name: name, time: nowTime, tardyTime: tardyTime)
           : showAckDialog(context, 'Alert', 'Student\'s attendance not saved');
     }
     if (person != null) {
-      if (person.status == Status.T) {
+      if (person.status == StatusType.T) {
         dynamic map = await Navigator.pushNamed(context, "/tardy");
         if(map == null) {
           showAckDialog(context, "Error",
@@ -121,7 +143,7 @@ class _HomeState extends State<Home> {
   }
 
   Future<Person> showDropdownConfirmDialog(BuildContext context, List<String> result, List<Person> people) async {
-    List<String> grades = people.map((person) {return person.grade;}).toList();
+    List<String> grades = people.map((person) {return person.Grade;}).toList();
     String grade = grades[0];
     Widget content =
     Column(
@@ -165,11 +187,11 @@ class _HomeState extends State<Home> {
       }),
     ];
     Map<String, String> map = await customDialog(context, "Confirm", content, actions);
-    return map.containsKey('grade') ? people.firstWhere((person) => person.grade == map['grade']) : null;
+    return map.containsKey('grade') ? people.firstWhere((person) => person.Grade == map['grade']) : null;
   }
 
-  Future<Map<String, dynamic>> downloadRoster() async {
-    Map<String, dynamic> map = await _databaseService.getRoster();
+  Future<Map<dynamic, dynamic>> downloadRoster() async {
+    Map<dynamic, dynamic> map = await _databaseService.getRoster();
     _save();
     return map;
   }
@@ -182,12 +204,12 @@ class _HomeState extends State<Home> {
   List<Person> findPeople(String role, String name, TimeOfDay now) {
     List<Person> p = [];
     if(roster[role].containsKey('people') && roster[role]['people'].contains(name)) {
-      p.add(new Person(role: role, name: name, time: now, tardyTime: tardyTime));
+      p.add(new Person(Role: role, Name: name, time: now, tardyTime: tardyTime));
     } else {
       List<String> grades = roster[role].keys.toList().cast<String>();
       grades.forEach((grade) {
         if(roster[role][grade].contains(name)) {
-          p.add(new Person(role: role, name: name, grade: grade, time: now, tardyTime: tardyTime));
+          p.add(new Person(Role: role, Name: name, Grade: grade, time: now, tardyTime: tardyTime));
         }
       });
     }
@@ -196,14 +218,14 @@ class _HomeState extends State<Home> {
 
   sendToDatabase(Person p) {
     String currDate = toDbDate(DateTime.now());
-    List<String> databaseRef =_databaseService.getConfig().toDbRef();
-    if(p.grade != null) {
-      databaseRef.addAll(['Dates', getSchoolYear(dt: DateTime.now()), currDate, p.role, p.grade, p.name]);
-    } else {
-      databaseRef.addAll(['Dates', getSchoolYear(dt: DateTime.now()), currDate, p.role, p.name]);
-
-    }
-    _databaseService.set(databaseRef, val: p.toDbObj());
+    _databaseService.updateAttendance(
+        getSchoolYear(dt: DateTime.now()),
+        currDate,
+        p.Role,
+        p.Name,
+        grade: p.Grade,
+        val: p.toDbObj()
+    );
   }
 
   Future<void> _read() async {
