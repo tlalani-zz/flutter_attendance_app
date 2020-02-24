@@ -141,7 +141,7 @@ class _State extends State<SignIn> {
 
   void submitForm() async {
     FocusScope.of(context).requestFocus(new FocusNode());
-    bool isConnected = await connectedToInternet();
+    bool isConnected = true;
     if(isConnected) {
       setState(() => loading = true);
       bool signedIn = await _authService.signIn(email, password);
