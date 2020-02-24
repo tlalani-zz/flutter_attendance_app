@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_attendance/screens/roster/tabbed-page.dart';
+import 'package:flutter_attendance/mobile/screens/roster/tabbed-page.dart';
 import 'package:flutter_attendance/services/database.dart';
 import 'package:flutter_attendance/shared/constants/constants.dart';
 import 'package:flutter_attendance/shared/loader.dart';

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_attendance/screens/home.dart';
-import 'package:flutter_attendance/screens/intro.dart';
-import 'package:flutter_attendance/screens/manual.dart';
-import 'package:flutter_attendance/screens/roster/roster-update.dart';
-import 'package:flutter_attendance/screens/selection.dart';
-import 'package:flutter_attendance/screens/signin.dart';
-import 'package:flutter_attendance/screens/tardy.dart';
-import 'package:flutter_attendance/screens/update/update-attendance.dart';
-import 'package:flutter_attendance/screens/update/update-person.dart';
+import 'package:flutter_attendance/mobile/screens/home.dart';
+import 'package:flutter_attendance/mobile/screens/intro.dart';
+import 'package:flutter_attendance/mobile/screens/manual.dart';
+import 'package:flutter_attendance/mobile/screens/roster/roster-update.dart';
+import 'package:flutter_attendance/mobile/screens/selection.dart';
+import 'package:flutter_attendance/mobile/screens/signin.dart';
+import 'package:flutter_attendance/mobile/screens/tardy.dart';
+import 'package:flutter_attendance/mobile/screens/update/update-attendance.dart';
+import 'package:flutter_attendance/mobile/screens/update/update-person.dart';
 
 void main() => runApp(MyApp());
 
