@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_attendance/screens/home.dart';
-import 'package:flutter_attendance/screens/manual.dart';
-import 'package:flutter_attendance/screens/selection.dart';
-import 'package:flutter_attendance/screens/signin.dart';
-import 'package:flutter_attendance/screens/tardy.dart';
+import 'package:flutter_attendance/mobile/screens/home.dart';
+import 'package:flutter_attendance/mobile/screens/intro.dart';
+import 'package:flutter_attendance/mobile/screens/manual.dart';
+import 'package:flutter_attendance/mobile/screens/roster/roster-update.dart';
+import 'package:flutter_attendance/mobile/screens/selection.dart';
+import 'package:flutter_attendance/mobile/screens/signin.dart';
+import 'package:flutter_attendance/mobile/screens/tardy.dart';
+import 'package:flutter_attendance/mobile/screens/update/update-attendance.dart';
+import 'package:flutter_attendance/mobile/screens/update/update-person.dart';
 
 void main() => runApp(MyApp());
 
@@ -28,11 +32,15 @@ class MyApp extends StatelessWidget {
       ),
         initialRoute: "/login",
         routes: {
+          "/intro": (context) => IntroScreen(),
           "/login": (context) => SignIn(),
           "/select": (context) => ReOptionsSelect(),
           "/home": (context) => Home(),
           "/tardy": (context) => TardyOptions(),
           "/manual": (context) => ManualEntry(),
+          "/roster": (context) => Roster(),
+          "/update": (context) => UpdateAttendance(),
+          "/updatePerson": (context) => UpdatePerson(),
         }
     );
   }
